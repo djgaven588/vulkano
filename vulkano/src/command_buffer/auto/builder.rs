@@ -15,7 +15,9 @@ use crate::{
     },
     descriptor_set::{DescriptorSetResources, DescriptorSetWithOffsets},
     device::{Device, DeviceOwned},
-    image::{view::ImageView, Image, ImageAspects, ImageLayout, ImageSubresourceRange},
+    image::{
+        view::ImageView, Image, ImageAspects, ImageLayout, ImageSubresourceRange, SampleCount,
+    },
     pipeline::{
         graphics::{
             color_blend::LogicOp,
@@ -1302,6 +1304,7 @@ pub(in crate::command_buffer) struct CommandBufferBuilderState {
     // Dynamic state
     pub(in crate::command_buffer) blend_constants: Option<[f32; 4]>,
     pub(in crate::command_buffer) color_write_enable: Option<SmallVec<[bool; 4]>>,
+    pub(in crate::command_buffer) rasterization_samples: Option<SampleCount>,
     pub(in crate::command_buffer) cull_mode: Option<CullMode>,
     pub(in crate::command_buffer) depth_bias: Option<DepthBiasState>,
     pub(in crate::command_buffer) depth_bias_enable: Option<bool>,
@@ -1392,7 +1395,7 @@ impl CommandBufferBuilderState {
                 // DynamicState::TessellationDomainOrigin => todo!(),
                 // DynamicState::DepthClampEnable => todo!(),
                 // DynamicState::PolygonMode => todo!(),
-                // DynamicState::RasterizationSamples => todo!(),
+                DynamicState::RasterizationSamples => self.rasterization_samples = None,
                 // DynamicState::SampleMask => todo!(),
                 // DynamicState::AlphaToCoverageEnable => todo!(),
                 // DynamicState::AlphaToOneEnable => todo!(),

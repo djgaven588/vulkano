@@ -2499,6 +2499,22 @@ impl<L> AutoCommandBufferBuilder<L> {
                         }));
                     }
                 }
+                DynamicState::RasterizationSamples => {
+                    if self.builder_state.rasterization_samples.is_none() {
+                        return Err(Box::new(ValidationError {
+                            problem: format!(
+                                "the currently bound graphics pipeline requires the \
+                                `DynamicState::{:?}` dynamic state, but \
+                                this state was either not set, or it was overwritten by a \
+                                more recent `bind_pipeline_graphics` command",
+                                dynamic_state
+                            )
+                            .into(),
+                            vuids: vuids!(vuid_type, "None-07622"),
+                            ..Default::default()
+                        }));
+                    }
+                }
                 DynamicState::CullMode => {
                     if self.builder_state.cull_mode.is_none() {
                         return Err(Box::new(ValidationError {

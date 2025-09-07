@@ -1,8 +1,9 @@
 use crate::command_buffer::{RecordingCommandBuffer, Result};
-use ash::vk;
+use ash::vk::{self, SampleCountFlags};
 use smallvec::SmallVec;
 use vulkano::{
     device::DeviceOwned,
+    image::SampleCount,
     pipeline::graphics::{
         color_blend::LogicOp,
         depth_stencil::{CompareOp, StencilFaces, StencilOp},
@@ -55,6 +56,28 @@ impl RecordingCommandBuffer<'_> {
                 self.handle(),
                 enables_vk.len() as u32,
                 enables_vk.as_ptr(),
+            )
+        };
+
+        self
+    }
+
+    /// Sets the dynamic rasterization samples value for future draw calls.
+    pub unsafe fn set_rasterization_samples(&mut self, samples: SampleCount) -> Result<&mut Self> {
+        Ok(unsafe { self.set_rasterization_samples_unchecked(samples) })
+    }
+
+    pub unsafe fn set_rasterization_samples_unchecked(
+        &mut self,
+        samples: SampleCount,
+    ) -> &mut Self {
+        let fns = self.device().fns();
+
+        unsafe {
+            (fns.ext_extended_dynamic_state3
+                .cmd_set_rasterization_samples_ext)(
+                self.handle(),
+                SampleCountFlags::from_raw(samples.into()),
             )
         };
 

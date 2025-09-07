@@ -671,12 +671,15 @@ vulkan_enum! {
         RequiresAllOf([DeviceExtension(ext_extended_dynamic_state3)]),
     ]), */
 
-    /* TODO: enable
-    // TODO: document
+    /// The value of
+    /// [`MultisampleState::rasterization_samples`](crate::pipeline::graphics::multisample::MultisampleState::rasterization_samples).
+    ///
+    /// Set with
+    /// [`set_rasterization_samples`](crate::command_buffer::AutoCommandBufferBuilder::set_rasterization_samples)
     RasterizationSamples = RASTERIZATION_SAMPLES_EXT
     RequiresOneOf([
         RequiresAllOf([DeviceExtension(ext_extended_dynamic_state3)]),
-    ]), */
+    ]),
 
     /* TODO: enable
     // TODO: document

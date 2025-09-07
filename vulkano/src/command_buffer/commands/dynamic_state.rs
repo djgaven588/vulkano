@@ -1,6 +1,7 @@
 use crate::{
     command_buffer::{sys::RecordingCommandBuffer, AutoCommandBufferBuilder},
     device::{DeviceOwned, QueueFlags},
+    image::SampleCount,
     pipeline::{
         graphics::{
             color_blend::LogicOp,
@@ -1334,6 +1335,46 @@ impl<L> AutoCommandBufferBuilder<L> {
             Default::default(),
             move |out: &mut RecordingCommandBuffer| {
                 unsafe { out.set_fragment_shading_rate_unchecked(fragment_size, combiner_ops) };
+            },
+        );
+
+        self
+    }
+
+    /// Sets the dynamic rasterization samples for future draw calls.
+    #[inline]
+    pub fn set_rasterization_samples(
+        &mut self,
+        samples: SampleCount,
+    ) -> Result<&mut Self, Box<ValidationError>> {
+        self.validate_set_rasterization_samples(samples)?;
+
+        Ok(unsafe { self.set_rasterization_samples_unchecked(samples) })
+    }
+
+    fn validate_set_rasterization_samples(
+        &self,
+        samples: SampleCount,
+    ) -> Result<(), Box<ValidationError>> {
+        self.inner.validate_set_rasterization_samples(samples)?;
+
+        self.validate_graphics_pipeline_fixed_state(DynamicState::RasterizationSamples)?;
+
+        Ok(())
+    }
+
+    #[cfg_attr(not(feature = "document_unchecked"), doc(hidden))]
+    pub unsafe fn set_rasterization_samples_unchecked(
+        &mut self,
+        samples: SampleCount,
+    ) -> &mut Self {
+        self.builder_state.rasterization_samples = Some(samples);
+
+        self.add_command(
+            "set_rasterization_samples",
+            Default::default(),
+            move |out: &mut RecordingCommandBuffer| {
+                unsafe { out.set_rasterization_samples_unchecked(samples) };
             },
         );
 
@@ -3559,6 +3600,48 @@ impl RecordingCommandBuffer {
                 self.handle(),
                 &fragment_size,
                 combiner_ops.as_ptr().cast(),
+            )
+        };
+
+        self
+    }
+
+    fn validate_set_rasterization_samples(
+        &self,
+        _samples: SampleCount,
+    ) -> Result<(), Box<ValidationError>> {
+        let device = self.device();
+        let features = device.enabled_features();
+
+        // TODO: Validate ``_samples`` to ensure it's valid.
+        // This varies based on attachments, more information would be needed.
+
+        if !features.extended_dynamic_state3_rasterization_samples {
+            return Err(Box::new(ValidationError {
+                context: "features.extended_dynamic_state3_rasterization_samples".into(),
+                problem:
+                    "the `extended_dynamic_state3_rasterization_samples` feature must be enabled"
+                        .into(),
+                vuids: &["VUID-VkGraphicsPipelineCreateInfo-pDynamicState-09026"],
+                ..Default::default()
+            }));
+        }
+
+        Ok(())
+    }
+
+    #[cfg_attr(not(feature = "document_unchecked"), doc(hidden))]
+    pub unsafe fn set_rasterization_samples_unchecked(
+        &mut self,
+        samples: SampleCount,
+    ) -> &mut Self {
+        let fns = self.device().fns();
+
+        unsafe {
+            (fns.ext_extended_dynamic_state3
+                .cmd_set_rasterization_samples_ext)(
+                self.handle(),
+                vk::SampleCountFlags::from_raw(samples.into()),
             )
         };
 
