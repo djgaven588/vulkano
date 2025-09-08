@@ -3606,6 +3606,16 @@ impl RecordingCommandBuffer {
         self
     }
 
+    #[inline]
+    pub unsafe fn set_rasterization_samples(
+        &mut self,
+        _samples: SampleCount,
+    ) -> Result<&mut Self, Box<ValidationError>> {
+        self.validate_set_rasterization_samples(_samples)?;
+
+        Ok(unsafe { self.set_rasterization_samples_unchecked(_samples) })
+    }
+
     fn validate_set_rasterization_samples(
         &self,
         _samples: SampleCount,
